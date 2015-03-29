@@ -5,7 +5,7 @@ When you first open this application, it will show a window like below and start
 
 It also support running at start up. Just check the check box.
 
-![Snapshot](/master/BingWallpaper/resource/snapshot.png)
+![Snapshot](https://raw.githubusercontent.com/kfstorm/BingWallpaper/master/resource/snapshot.png)
 
 Blog: [http://www.kfstorm.com/blog/bing-wallpaper/](http://www.kfstorm.com/blog/bing-wallpaper/)
 
