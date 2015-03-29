@@ -45,8 +45,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BingWallpaperInfo.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Downloader.cs" />
+    <Compile Include="IWebAccessor.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -60,6 +62,7 @@
     <Compile Include="State.cs" />
     <Compile Include="UrlHelper.cs" />
     <Compile Include="WallpaperChangedEventArgs.cs" />
+    <Compile Include="WebAccessor.cs" />
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>

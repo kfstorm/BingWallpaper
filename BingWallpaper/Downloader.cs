@@ -7,13 +7,13 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Windows.Forms;
-using System.Xml;
 using System.Xml.Serialization;
 
 namespace Kfstorm.BingWallpaper
 {
     public class Downloader : IDisposable
     {
+        private readonly IWebAccessor _webAccessor;
         public State State { get; protected set; }
 
         private readonly bool _isJpgSupported = Environment.OSVersion.Version >= new Version(6, 0);
@@ -24,8 +24,9 @@ namespace Kfstorm.BingWallpaper
 
         bool _firstTime = true;
 
-        public Downloader()
+        public Downloader(IWebAccessor webAccessor)
         {
+            _webAccessor = webAccessor;
             State = LoadState();
             _worker = new BackgroundWorker {WorkerSupportsCancellation = true};
             _worker.DoWork += worker_DoWork;
@@ -122,29 +123,26 @@ namespace Kfstorm.BingWallpaper
             }
             try
             {
-                XmlReader reader = XmlReader.Create(Constants.WallpaperInfoUrl);
                 if (_worker.CancellationPending)
                 {
                     e.Cancel = true;
                     return;
                 }
-                var document = new XmlDocument();
-                document.Load(reader);
-                string pictureUrl = string.Format(Constants.PictureUrlFormat, document.GetElementsByTagName("urlBase")[0].InnerText);
-                string copyright = document.GetElementsByTagName("copyright")[0].InnerText;
-                string date1 = document.GetElementsByTagName("fullstartdate")[0].InnerText;
-                string date2 = document.GetElementsByTagName("enddate")[0].InnerText;
-                DateTime temp = new DateTime(int.Parse(date1.Substring(0, 4)), int.Parse(date1.Substring(4, 2)), int.Parse(date1.Substring(6, 2)), int.Parse(date1.Substring(8, 2)), int.Parse(date1.Substring(10, 2)), 0, DateTimeKind.Unspecified);
-                DateTimeOffset startDate = new DateTimeOffset(temp, Constants.TimeZone.GetUtcOffset(temp));
-                temp = new DateTime(int.Parse(date2.Substring(0, 4)), int.Parse(date2.Substring(4, 2)), int.Parse(date2.Substring(6, 2)), 0, 0, 0, DateTimeKind.Unspecified);
-                DateTimeOffset endDate = new DateTimeOffset(temp, Constants.TimeZone.GetUtcOffset(temp));
-                if (pictureUrl != State.PictureUrl || !File.Exists(State.PictureFilePath))
+                var xmlContent = _webAccessor.DownloadString(Constants.WallpaperInfoUrl);
+                if (_worker.CancellationPending)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+
+                var info = new BingWallpaperInfo(xmlContent);
+                if (info.PictureUrl != State.PictureUrl || !File.Exists(State.PictureFilePath))
                 {
                     using (var client = new WebClient())
                     {
                         try
                         {
-                            client.DownloadFile(pictureUrl, Constants.JpgFile);
+                            client.DownloadFile(info.PictureUrl, Constants.JpgFile);
                             if (_worker.CancellationPending)
                             {
                                 e.Cancel = true;
@@ -161,11 +159,11 @@ namespace Kfstorm.BingWallpaper
                                 File.Delete(Constants.JpgFile);
                                 ChangeWallpager(Constants.BmpFile);
                             }
-                            State.PictureUrl = pictureUrl;
+                            State.PictureUrl = info.PictureUrl;
                             State.PictureFilePath = _isJpgSupported ? Constants.JpgFile : Constants.BmpFile;
-                            State.StartDate = startDate;
-                            State.EndDate = endDate;
-                            State.Copyright = copyright;
+                            State.StartDate = info.StartDate;
+                            State.EndDate = info.EndDate;
+                            State.Copyright = info.Copyright;
                             SaveState(State);
                             OnDownloadCompleted();
                         }

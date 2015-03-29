@@ -37,7 +37,7 @@ namespace Kfstorm.BingWallpaper
                 Application.SetCompatibleTextRenderingDefault(false);
                 Environment.CurrentDirectory = Constants.DataPath;
 
-                _downloader = new Downloader();
+                _downloader = new Downloader(new WebAccessor());
                 CreateMainForm();
                 _downloader.DownloadCompleted += _downloader_DownloadCompleted;
                 _downloader.WallpaperChanged += _downloader_WallpaperChanged;
