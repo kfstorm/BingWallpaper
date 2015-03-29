@@ -18,7 +18,7 @@ namespace Kfstorm.BingWallpaper
                 ((AssemblyCopyrightAttribute)
                  (Assembly.GetEntryAssembly().GetCustomAttributes(typeof (AssemblyCopyrightAttribute), true)[0]))
                     .Copyright;
-            homepageLabel.Tag = @"http://www.kfstorm.com/blog";
+            homepageLabel.Tag = @"http://www.kfstorm.com/blog/bing-wallpaper/";
             noTitleTooltip.SetToolTip(homepageLabel, (string) homepageLabel.Tag);
             exitButton.Text = string.Format("退出{0}", Application.ProductName);
             noTitleTooltip.SetToolTip(exitButton, string.Format("使{0}停止运行。", Application.ProductName));
