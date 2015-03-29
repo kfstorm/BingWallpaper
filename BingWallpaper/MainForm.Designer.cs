@@ -1,11 +1,14 @@
-﻿namespace Kfstorm.BingWallpaper
+﻿using System.ComponentModel;
+using System.Windows.Forms;
+
+namespace Kfstorm.BingWallpaper
 {
     partial class MainForm
     {
         /// <summary>
         /// Required designer variable.
         /// </summary>
-        private System.ComponentModel.IContainer components = null;
+        private IContainer components = null;
 
         /// <summary>
         /// Clean up any resources being used.
@@ -150,15 +153,15 @@
 
         #endregion
 
-        private System.Windows.Forms.Button exitButton;
-        private System.Windows.Forms.LinkLabel homepageLabel;
-        private System.Windows.Forms.Label versionLabel;
-        private System.Windows.Forms.Label nameLabel;
-        private System.Windows.Forms.CheckBox runOnStartupCheckBox;
-        private System.Windows.Forms.ToolTip runOnStartupToolTip;
-        private System.Windows.Forms.LinkLabel titleLable;
-        private System.Windows.Forms.Label runningLabel;
-        private System.Windows.Forms.ToolTip runningTooltip;
-        private System.Windows.Forms.ToolTip noTitleTooltip;
+        private Button exitButton;
+        private LinkLabel homepageLabel;
+        private Label versionLabel;
+        private Label nameLabel;
+        private CheckBox runOnStartupCheckBox;
+        private ToolTip runOnStartupToolTip;
+        private LinkLabel titleLable;
+        private Label runningLabel;
+        private ToolTip runningTooltip;
+        private ToolTip noTitleTooltip;
     }
 }

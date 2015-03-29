@@ -10,6 +10,7 @@ namespace Kfstorm.BingWallpaper
         {
             InitializeComponent();
 
+            // ReSharper disable once DoNotCallOverridableMethodsInConstructor
             Text = Application.ProductName;
             nameLabel.Text = Application.ProductName;
             versionLabel.Text = Application.ProductVersion;
@@ -48,10 +49,7 @@ namespace Kfstorm.BingWallpaper
 
         protected override bool ShowWithoutActivation
         {
-            get
-            {
-                return _showWithoutActivation;
-            }
+            get { return _showWithoutActivation; }
         }
 
         private void homepageLabel_Click(object sender, EventArgs e)

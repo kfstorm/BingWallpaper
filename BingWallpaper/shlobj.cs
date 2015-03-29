@@ -1,5 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
+
+// ReSharper disable InconsistentNaming
 
 namespace Kfstorm.BingWallpaper
 {
@@ -9,7 +12,7 @@ namespace Kfstorm.BingWallpaper
         public static readonly int SizeOf = Marshal.SizeOf(typeof (WALLPAPEROPT));
     }
 
-    public enum WallPaperStyle : int
+    public enum WallPaperStyle
     {
         WPSTYLE_CENTER = 0,
         WPSTYLE_TILE = 1,
@@ -18,7 +21,7 @@ namespace Kfstorm.BingWallpaper
     }
 
     [Flags]
-    public enum AD_Apply : int
+    public enum AD_Apply
     {
         SAVE = 0x00000001,
         HTMLGEN = 0x00000002,
@@ -39,7 +42,7 @@ namespace Kfstorm.BingWallpaper
     }
 
     [Flags]
-    public enum CompItemState : int
+    public enum CompItemState
     {
         NORMAL = 0x00000001,
         FULLSCREEN = 00000002,
@@ -81,7 +84,7 @@ namespace Kfstorm.BingWallpaper
         public int iPreferredTopPercent;
     }
 
-    public enum CompType : int
+    public enum CompType
     {
         HTMLDOC = 0,
         PICTURE = 1,
@@ -114,7 +117,7 @@ namespace Kfstorm.BingWallpaper
         public COMPSTATEINFO csiRestored;
     }
 
-    public enum DtiAddUI : int
+    public enum DtiAddUI
     {
         DEFAULT = 0x00000000,
         DISPSUBWIZARD = 0x00000001,
@@ -122,7 +125,7 @@ namespace Kfstorm.BingWallpaper
     }
 
     [Flags]
-    public enum ComponentModify : int
+    public enum ComponentModify
     {
         TYPE = 0x00000001,
         CHECKED = 0x00000002,
@@ -147,7 +150,7 @@ namespace Kfstorm.BingWallpaper
     }
 
     [Flags]
-    public enum AddURL : int
+    public enum AddURL
     {
         SILENT = 0x0001
     }
@@ -161,7 +164,7 @@ namespace Kfstorm.BingWallpaper
         int ApplyChanges(AD_Apply dwFlags);
 
         [PreserveSig]
-        int GetWallpaper([MarshalAs(UnmanagedType.LPWStr)] System.Text.StringBuilder pwszWallpaper,
+        int GetWallpaper([MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszWallpaper,
             int cchWallpaper,
             int dwReserved);
 
@@ -175,7 +178,7 @@ namespace Kfstorm.BingWallpaper
         int SetWallpaperOptions(ref WALLPAPEROPT pwpo, int dwReserved);
 
         [PreserveSig]
-        int GetPattern([MarshalAs(UnmanagedType.LPWStr)] System.Text.StringBuilder pwszPattern, int cchPattern,
+        int GetPattern([MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszPattern, int cchPattern,
             int dwReserved);
 
         [PreserveSig]
@@ -233,15 +236,8 @@ namespace Kfstorm.BingWallpaper
 
         public static IActiveDesktop GetActiveDesktop()
         {
-            Type typeActiveDesktop = Type.GetTypeFromCLSID(shlobj.CLSID_ActiveDesktop);
+            Type typeActiveDesktop = Type.GetTypeFromCLSID(CLSID_ActiveDesktop);
             return (IActiveDesktop) Activator.CreateInstance(typeActiveDesktop);
-        }
-
-        public shlobj()
-        {
-            //
-            // TODO: Add constructor logic here
-            //
         }
     }
 }

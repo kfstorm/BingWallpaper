@@ -1,11 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.IO.Pipes;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
 using System.Linq;
-using Microsoft.Win32;
+using System.Runtime.InteropServices;
 using System.Threading;
+using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace Kfstorm.BingWallpaper
 {
@@ -60,7 +60,7 @@ namespace Kfstorm.BingWallpaper
                 IActiveDesktop iad = shlobj.GetActiveDesktop();
                 iad.SetWallpaper(Path.GetFullPath(e.WallpaperFilePath), 0);
                 iad.ApplyChanges(AD_Apply.ALL | AD_Apply.FORCE | AD_Apply.BUFFERED_REFRESH);
-                System.Runtime.InteropServices.Marshal.ReleaseComObject(iad);
+                Marshal.ReleaseComObject(iad);
             });
 
         }
@@ -108,6 +108,7 @@ namespace Kfstorm.BingWallpaper
             }
             catch
             {
+                // ignored
             }
         }
 
@@ -173,6 +174,7 @@ namespace Kfstorm.BingWallpaper
                         }
                         server.Disconnect();
                     }
+                    // ReSharper disable once FunctionNeverReturns
                 });
         }
 
@@ -192,6 +194,7 @@ namespace Kfstorm.BingWallpaper
             }
             catch
             {
+                // ignored
             }
         }
     }
