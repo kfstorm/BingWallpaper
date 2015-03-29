@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildExtensionsPath>$(MSBuildThisFileDirectory)packages\MSBuildTasks.1.4.0.88\tools</MSBuildExtensionsPath>
+    <MSBuildCommunityTasksPath>$(MSBuildExtensionsPath)</MSBuildCommunityTasksPath>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath)\MSBuild.Community.Tasks.Targets" Condition="'$(ImportMSBuildCommunityTasks)' == 'true'"/>
+  <!-- Inline task to bootstrap the build to enable downloading nuget.exe -->
+  <UsingTask TaskName="DownloadFile" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v12.0.dll">
+    <ParameterGroup>
+      <Address ParameterType="System.String" Required="true"/>
+      <FileName ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System" />
+      <Reference Include="System.IO" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+            var directory = System.IO.Path.GetDirectoryName(FileName);
+            Directory.CreateDirectory(directory);
+
+            var tempFile = Path.Combine(directory, Path.GetRandomFileName());
+            var client = new System.Net.WebClient();
+            client.DownloadFile(Address, tempFile);
+
+            try
+            {
+                if (!File.Exists(FileName))
+                    File.Move(tempFile, FileName);
+            }
+            finally
+            {
+                if (File.Exists(tempFile))
+                    File.Delete(tempFile);
+            }
+        ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
+    <NuGetToolPath>packages\nuget.exe</NuGetToolPath>
+  </PropertyGroup>
+  <Target Name="InitNuGet">
+    <Message Importance="High" Text="Downloading NuGet packages..."/>
+    <!-- Download latest nuget.exe -->
+    <DownloadFile FileName="$(NuGetToolPath)" Address="https://www.nuget.org/nuget.exe" Condition="!Exists('$(NuGetToolPath)')"/>
+    <!-- Restore build tasks -->
+    <Exec Command="$(NuGetToolPath) install -OutputDirectory packages -Verbosity detailed .nuget\packages.config"/>
+  </Target>
+  <Target Name="Build">
+    <MSBuild Projects="$(MSBuildThisFile)" Targets="InitNuGet"/>
+    <MSBuild Projects="$(MSBuildThisFile)" Targets="BuildAndZip" Properties="ImportMSBuildCommunityTasks=true"/>
+  </Target>
+  <Target Name="BuildAndZip">
+    <RemoveDir Directories="bin"/>
+    <MSBuild Projects="$(MSBuildThisFile)" Targets="BuildWithTargetFramework" Properties="TargetFrameworkVersion=v3.5"/>
+    <MSBuild Projects="$(MSBuildThisFile)" Targets="BuildWithTargetFramework" Properties="TargetFrameworkVersion=v4.0"/>
+    <ItemGroup>
+      <ZipIncludeFiles Include="bin\*"/>
+    </ItemGroup>
+    <PropertyGroup>
+      <ZipInputFile1>%(ZipIncludeFiles.Filename)</ZipInputFile1>
+      <ZipOutputFile>bin\$(ZipInputFile1.SubString(0, $(ZipInputFile1.IndexOf('_FX')))).zip</ZipOutputFile>
+    </PropertyGroup>
+    <Zip Files="@(ZipIncludeFiles)" WorkingDirectory="bin" ZipFileName="$(ZipOutputFile)" ZipLevel="9"/>
+  </Target>
+  <Target Name="BuildWithTargetFramework">
+    <MSBuild Projects="BingWallpaper.sln" Targets="Rebuild" Properties="Configuration=$(Configuration);TargetFrameworkVersion=$(TargetFrameworkVersion);OutputPath=bin\$(Configuration)_$(TargetFrameworkVersion)"/>
+    <GetAssemblyIdentity AssemblyFiles="BingWallpaper\bin\$(Configuration)_$(TargetFrameworkVersion)\BingWallpaper.exe">
+      <Output TaskParameter="Assemblies" ItemName="fooAssemblyInfo"/>
+    </GetAssemblyIdentity>
+    <Copy SourceFiles="BingWallpaper\bin\$(Configuration)_$(TargetFrameworkVersion)\BingWallpaper.exe" DestinationFiles="bin\BingWallpaper_%(fooAssemblyInfo.Version)_FX$(TargetFrameworkVersion.SubString(1)).exe"/>
+  </Target>
+</Project>
