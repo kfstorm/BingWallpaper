@@ -114,7 +114,7 @@ namespace Kfstorm.BingWallpaper
 
         public static void Exit()
         {
-            _downloader.Stop();
+            // do not dispose here
             _downloader = null;
             Application.Exit();
         }

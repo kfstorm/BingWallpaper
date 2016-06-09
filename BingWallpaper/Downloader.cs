@@ -1,12 +1,11 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
-using System.Net;
 using System.Text;
-using System.Windows.Forms;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 namespace Kfstorm.BingWallpaper
@@ -18,44 +17,24 @@ namespace Kfstorm.BingWallpaper
 
         private readonly bool _isJpgSupported = Environment.OSVersion.Version >= new Version(6, 0);
 
-        Timer _timer;
-
-        BackgroundWorker _worker;
-
         bool _firstTime = true;
+
+        private readonly CancellationTokenSource _cts = new CancellationTokenSource();
+        private Task _task;
 
         public Downloader(IWebAccessor webAccessor)
         {
             _webAccessor = webAccessor;
             State = LoadState();
-            _worker = new BackgroundWorker {WorkerSupportsCancellation = true};
-            _worker.DoWork += worker_DoWork;
-
-            _timer = new Timer {Interval = 600000};
-            _timer.Tick += timer_Tick;
         }
 
         public void Run()
         {
-            _worker.RunWorkerAsync();
-            _timer.Start();
-        }
-
-        public void Stop()
-        {
-            if (_worker.IsBusy)
+            if (_task != null)
             {
-                _worker.CancelAsync();
+                throw new InvalidOperationException("Already started running");
             }
-            _timer.Stop();
-        }
-
-        void timer_Tick(object sender, EventArgs e)
-        {
-            if (_worker != null && !_worker.IsBusy && State.EndDate < DateTimeOffset.Now)
-            {
-                _worker.RunWorkerAsync();
-            }
+            _task = DoWork(_cts.Token);
         }
 
         State LoadState()
@@ -113,41 +92,21 @@ namespace Kfstorm.BingWallpaper
             }
         }
 
-        void worker_DoWork(object sender, DoWorkEventArgs e)
+        private async Task DoWork(CancellationToken ct)
         {
-            if (_worker == null) return;
-            if (_worker.CancellationPending)
+            while (!ct.IsCancellationRequested)
             {
-                e.Cancel = true;
-                return;
-            }
-            try
-            {
-                if (_worker.CancellationPending)
+                try
                 {
-                    e.Cancel = true;
-                    return;
-                }
-                var xmlContent = _webAccessor.DownloadString(Constants.WallpaperInfoUrl);
-                if (_worker.CancellationPending)
-                {
-                    e.Cancel = true;
-                    return;
-                }
-
-                var info = new BingWallpaperInfo(xmlContent);
-                if (info.PictureUrl != State.PictureUrl || !File.Exists(State.PictureFilePath))
-                {
-                    using (var client = new WebClient())
+                    var xmlContent = await _webAccessor.DownloadStringAsync(Constants.WallpaperInfoUrl);
+                    ct.ThrowIfCancellationRequested();
+                    var info = new BingWallpaperInfo(xmlContent);
+                    if (info.PictureUrl != State.PictureUrl || !File.Exists(State.PictureFilePath))
                     {
                         try
                         {
-                            client.DownloadFile(info.PictureUrl, Constants.JpgFile);
-                            if (_worker.CancellationPending)
-                            {
-                                e.Cancel = true;
-                                return;
-                            }
+                            await _webAccessor.DownloadFileAsync(info.PictureUrl, Constants.JpgFile);
+                            ct.ThrowIfCancellationRequested();
 
                             if (_isJpgSupported)
                             {
@@ -161,8 +120,6 @@ namespace Kfstorm.BingWallpaper
                             }
                             State.PictureUrl = info.PictureUrl;
                             State.PictureFilePath = _isJpgSupported ? Constants.JpgFile : Constants.BmpFile;
-                            State.StartDate = info.StartDate;
-                            State.EndDate = info.EndDate;
                             State.Copyright = info.Copyright;
                             SaveState(State);
                             OnDownloadCompleted();
@@ -172,7 +129,7 @@ namespace Kfstorm.BingWallpaper
                             Log(ex.ToString());
                             try
                             {
-                                foreach (var file in new[] { Constants.JpgFile, Constants.BmpFile })
+                                foreach (var file in new[] {Constants.JpgFile, Constants.BmpFile})
                                 {
                                     if (File.Exists(file))
                                     {
@@ -186,21 +143,22 @@ namespace Kfstorm.BingWallpaper
                             }
                         }
                     }
-                }
-                else
-                {
-                    if (_firstTime)
+                    else
                     {
-                        ChangeWallpager(State.PictureFilePath);
+                        if (_firstTime)
+                        {
+                            ChangeWallpager(State.PictureFilePath);
+                        }
                     }
                 }
+                catch (Exception ex)
+                {
+                    Log(ex.ToString());
+                }
+                _firstTime = false;
+
+                await Task.Delay(TimeSpan.FromMinutes(10), ct);
             }
-            catch (Exception ex)
-            {
-                Log(ex.ToString());
-            }
-            _firstTime = false;
-            GC.Collect();
         }
 
         private void Log(string text)
@@ -244,35 +202,20 @@ namespace Kfstorm.BingWallpaper
             }
         }
 
-        bool _disposed;
-
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed)
+            if (_task != null)
             {
-                if (disposing)
+                _cts.Cancel();
+                try
                 {
-                    if (_worker != null)
-                    {
-                        Stop();
-                        _timer.Dispose();
-                        _timer = null;
-                        _worker.Dispose();
-                        _worker = null;
-                    }
+                    _task.Wait();
+                    _task = null;
                 }
-                _disposed = true;
+                catch (OperationCanceledException)
+                {
+                }
             }
         }
-        ~Downloader()
-        {
-            Dispose(false);
-        }
-
     }
 }

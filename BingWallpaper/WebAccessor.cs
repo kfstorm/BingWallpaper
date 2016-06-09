@@ -1,21 +1,21 @@
-﻿using System.IO;
-using System.Net;
+﻿using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Kfstorm.BingWallpaper
 {
     internal class WebAccessor : IWebAccessor
     {
-        private readonly WebClient _client = new WebClient();
+        private readonly WebClient _client = new WebClient {Encoding = Encoding.UTF8};
 
-        public void DownloadFile(string url, string fileName)
+        public Task DownloadFileAsync(string url, string fileName)
         {
-            _client.DownloadFile(url, fileName);
+            return _client.DownloadFileTaskAsync(url, fileName);
         }
 
-        public string DownloadString(string url)
+        public Task<string> DownloadStringAsync(string url)
         {
-            return new StreamReader(new MemoryStream(_client.DownloadData(url)), Encoding.UTF8).ReadToEnd();
+            return _client.DownloadStringTaskAsync(url);
         }
     }
 }

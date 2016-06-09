@@ -1,8 +1,10 @@
-﻿namespace Kfstorm.BingWallpaper
+﻿using System.Threading.Tasks;
+
+namespace Kfstorm.BingWallpaper
 {
     public interface IWebAccessor
     {
-        void DownloadFile(string url, string fileName);
-        string DownloadString(string url);
+        Task DownloadFileAsync(string url, string fileName);
+        Task<string> DownloadStringAsync(string url);
     }
 }
