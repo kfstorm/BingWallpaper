@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Bing Wallpaper")]
-[assembly: AssemblyCopyright("Copyright © K.F.Storm 2012 - 2015")]
+[assembly: AssemblyCopyright("Copyright © K.F.Storm 2012 - 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
