@@ -59,6 +59,15 @@ namespace Kfstorm.BingWallpaper
             {
                 IActiveDesktop iad = shlobj.GetActiveDesktop();
                 iad.SetWallpaper(Path.GetFullPath(e.WallpaperFilePath), 0);
+                if (Environment.OSVersion.Version >= new Version(6, 1))
+                {
+                    var options = new WALLPAPEROPT
+                    {
+                        dwSize = WALLPAPEROPT.SizeOf,
+                        dwStyle = WallPaperStyle.WPSTYLE_CROPTOFIT
+                    };
+                    iad.SetWallpaperOptions(options, 0);
+                }
                 iad.ApplyChanges(AD_Apply.ALL | AD_Apply.FORCE | AD_Apply.BUFFERED_REFRESH);
                 Marshal.ReleaseComObject(iad);
             });

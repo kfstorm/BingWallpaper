@@ -10,6 +10,8 @@ namespace Kfstorm.BingWallpaper
     public struct WALLPAPEROPT
     {
         public static readonly int SizeOf = Marshal.SizeOf(typeof (WALLPAPEROPT));
+        public int dwSize;
+        public WallPaperStyle dwStyle;
     }
 
     public enum WallPaperStyle
@@ -17,7 +19,10 @@ namespace Kfstorm.BingWallpaper
         WPSTYLE_CENTER = 0,
         WPSTYLE_TILE = 1,
         WPSTYLE_STRETCH = 2,
-        WPSTYLE_MAX = 3
+        WPSTYLE_KEEPASPECT = 3,
+        WPSTYLE_CROPTOFIT = 4,
+        WPSTYLE_SPAN = 5,
+        WPSTYLE_MAX = 5
     }
 
     [Flags]
