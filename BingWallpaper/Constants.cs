@@ -61,7 +61,7 @@ namespace Kfstorm.BingWallpaper
 
         public static string PictureUrlFormat
         {
-            get { return "http://www.bing.com{0}_1920x1080.jpg"; }
+            get { return "http://www.bing.com{0}_UHD.jpg"; }
         }
 
         public static TimeZoneInfo TimeZone
