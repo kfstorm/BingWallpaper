@@ -43,15 +43,37 @@ namespace Kfstorm.BingWallpaper
             this.runningLabel = new System.Windows.Forms.Label();
             this.runningTooltip = new System.Windows.Forms.ToolTip(this.components);
             this.noTitleTooltip = new System.Windows.Forms.ToolTip(this.components);
+            this.prePic = new System.Windows.Forms.Button();
+            this.nextPic = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
+            // prePic
+            //
+            prePic.Location = new System.Drawing.Point(285, 316);
+            prePic.Name = "PrePic";
+            prePic.Size = new System.Drawing.Size(75, 32);
+            prePic.TabIndex = 7;
+            prePic.Text = "上一个";
+            prePic.UseVisualStyleBackColor = true;
+            prePic.Click += new System.EventHandler(this.preButton_Click);
+            // 
+            // nextPic
+            //
+            nextPic.Location = new System.Drawing.Point(366, 316);
+            nextPic.Name = "NextPic";
+            nextPic.Size = new System.Drawing.Size(75, 32);
+            nextPic.TabIndex = 8;
+            nextPic.Text = "下一个";
+            nextPic.UseVisualStyleBackColor = true;
+            nextPic.Click += new System.EventHandler(this.nextButton_Click);
+            //
             // exitButton
             // 
             this.exitButton.AutoSize = true;
-            this.exitButton.Location = new System.Drawing.Point(407, 316);
+            this.exitButton.Location = new System.Drawing.Point(447, 316);
             this.exitButton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.exitButton.Name = "exitButton";
-            this.exitButton.Size = new System.Drawing.Size(205, 32);
+            this.exitButton.Size = new System.Drawing.Size(150, 32);
             this.exitButton.TabIndex = 5;
             this.exitButton.Text = "退出";
             this.exitButton.UseVisualStyleBackColor = true;
@@ -129,6 +151,8 @@ namespace Kfstorm.BingWallpaper
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(624, 361);
+            this.Controls.Add(this.prePic);
+            this.Controls.Add(this.nextPic);
             this.Controls.Add(this.runningLabel);
             this.Controls.Add(this.titleLable);
             this.Controls.Add(this.runOnStartupCheckBox);
@@ -163,5 +187,7 @@ namespace Kfstorm.BingWallpaper
         private Label runningLabel;
         private ToolTip runningTooltip;
         private ToolTip noTitleTooltip;
+        private Button prePic;
+        private Button nextPic;
     }
 }

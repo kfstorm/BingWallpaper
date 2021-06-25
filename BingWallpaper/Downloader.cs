@@ -28,13 +28,20 @@ namespace Kfstorm.BingWallpaper
             State = LoadState();
         }
 
-        public void Run()
+        public void Run(int refrashTime)
         {
-            if (_task != null)
+            if (refrashTime > 0)
             {
-                throw new InvalidOperationException("Already started running");
+                if (_task != null && !_task.IsCompleted)
+                {
+                    throw new InvalidOperationException("Already started running");
+                }
+                _task = DoWork(_cts.Token, refrashTime);
             }
-            _task = DoWork(_cts.Token);
+            else
+            {
+                _task = DoWork();
+            }
         }
 
         State LoadState()
@@ -92,7 +99,67 @@ namespace Kfstorm.BingWallpaper
             }
         }
 
-        private async Task DoWork(CancellationToken ct)
+        private async Task DoWork()
+        {
+            try
+            {
+                var xmlContent = await _webAccessor.DownloadStringAsync(Constants.WallpaperInfoUrl);
+                var info = new BingWallpaperInfo(xmlContent);
+                if (info.PictureUrl != State.PictureUrl || !File.Exists(State.PictureFilePath))
+                {
+                    try
+                    {
+                        await _webAccessor.DownloadFileAsync(info.PictureUrl, Constants.JpgFile);
+                        if (_isJpgSupported)
+                        {
+                            ChangeWallpager(Constants.JpgFile);
+                        }
+                        else
+                        {
+                            ConvertJpgToBmp(Constants.JpgFile, Constants.BmpFile);
+                            File.Delete(Constants.JpgFile);
+                            ChangeWallpager(Constants.BmpFile);
+                        }
+                        State.PictureUrl = info.PictureUrl;
+                        State.PictureFilePath = _isJpgSupported ? Constants.JpgFile : Constants.BmpFile;
+                        State.Copyright = info.Copyright;
+                        SaveState(State);
+                        OnDownloadCompleted();
+                    }
+                    catch (Exception ex)
+                    {
+                        Log(ex.ToString());
+                        try
+                        {
+                            foreach (var file in new[] { Constants.JpgFile, Constants.BmpFile })
+                            {
+                                if (File.Exists(file))
+                                {
+                                    File.Delete(file);
+                                }
+                            }
+                        }
+                        catch (Exception ex2)
+                        {
+                            Log(ex2.ToString());
+                        }
+                    }
+                }
+                else
+                {
+                    if (_firstTime)
+                    {
+                        ChangeWallpager(State.PictureFilePath);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log(ex.ToString());
+            }
+        }
+
+        private async Task DoWork(CancellationToken ct, int time)
         {
             while (!ct.IsCancellationRequested)
             {
@@ -157,7 +224,7 @@ namespace Kfstorm.BingWallpaper
                 }
                 _firstTime = false;
 
-                await Task.Delay(TimeSpan.FromMinutes(10), ct);
+                await Task.Delay(TimeSpan.FromMinutes(time), ct);
             }
         }
 
