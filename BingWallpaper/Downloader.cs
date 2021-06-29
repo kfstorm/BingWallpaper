@@ -28,7 +28,7 @@ namespace Kfstorm.BingWallpaper
             State = LoadState();
         }
 
-        public void Run(int refrashTime)
+        public async void Run(int refrashTime)
         {
             if (refrashTime > 0)
             {
@@ -36,11 +36,16 @@ namespace Kfstorm.BingWallpaper
                 {
                     throw new InvalidOperationException("Already started running");
                 }
-                _task = DoWork(_cts.Token, refrashTime);
+                while (!_cts.Token.IsCancellationRequested)
+                {
+                    _task = DoWork(_cts.Token);
+                    _firstTime = false;
+                    await Task.Delay(TimeSpan.FromMinutes(refrashTime), _cts.Token);
+                }
             }
             else
             {
-                _task = DoWork();
+                _task = DoWork(_cts.Token);
             }
         }
 
@@ -99,17 +104,21 @@ namespace Kfstorm.BingWallpaper
             }
         }
 
-        private async Task DoWork()
+
+        private async Task DoWork(CancellationToken ct)
         {
             try
             {
                 var xmlContent = await _webAccessor.DownloadStringAsync(Constants.WallpaperInfoUrl);
+                ct.ThrowIfCancellationRequested();
                 var info = new BingWallpaperInfo(xmlContent);
                 if (info.PictureUrl != State.PictureUrl || !File.Exists(State.PictureFilePath))
                 {
                     try
                     {
                         await _webAccessor.DownloadFileAsync(info.PictureUrl, Constants.JpgFile);
+                        ct.ThrowIfCancellationRequested();
+
                         if (_isJpgSupported)
                         {
                             ChangeWallpager(Constants.JpgFile);
@@ -156,75 +165,6 @@ namespace Kfstorm.BingWallpaper
             catch (Exception ex)
             {
                 Log(ex.ToString());
-            }
-        }
-
-        private async Task DoWork(CancellationToken ct, int time)
-        {
-            while (!ct.IsCancellationRequested)
-            {
-                try
-                {
-                    var xmlContent = await _webAccessor.DownloadStringAsync(Constants.WallpaperInfoUrl);
-                    ct.ThrowIfCancellationRequested();
-                    var info = new BingWallpaperInfo(xmlContent);
-                    if (info.PictureUrl != State.PictureUrl || !File.Exists(State.PictureFilePath))
-                    {
-                        try
-                        {
-                            await _webAccessor.DownloadFileAsync(info.PictureUrl, Constants.JpgFile);
-                            ct.ThrowIfCancellationRequested();
-
-                            if (_isJpgSupported)
-                            {
-                                ChangeWallpager(Constants.JpgFile);
-                            }
-                            else
-                            {
-                                ConvertJpgToBmp(Constants.JpgFile, Constants.BmpFile);
-                                File.Delete(Constants.JpgFile);
-                                ChangeWallpager(Constants.BmpFile);
-                            }
-                            State.PictureUrl = info.PictureUrl;
-                            State.PictureFilePath = _isJpgSupported ? Constants.JpgFile : Constants.BmpFile;
-                            State.Copyright = info.Copyright;
-                            SaveState(State);
-                            OnDownloadCompleted();
-                        }
-                        catch (Exception ex)
-                        {
-                            Log(ex.ToString());
-                            try
-                            {
-                                foreach (var file in new[] {Constants.JpgFile, Constants.BmpFile})
-                                {
-                                    if (File.Exists(file))
-                                    {
-                                        File.Delete(file);
-                                    }
-                                }
-                            }
-                            catch (Exception ex2)
-                            {
-                                Log(ex2.ToString());
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (_firstTime)
-                        {
-                            ChangeWallpager(State.PictureFilePath);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log(ex.ToString());
-                }
-                _firstTime = false;
-
-                await Task.Delay(TimeSpan.FromMinutes(time), ct);
             }
         }
 
