@@ -49,10 +49,7 @@ namespace Kfstorm.BingWallpaper
             get { return 1; }
         }
 
-        public static int PictureIndex
-        {
-            get { return 0; }
-        }
+        public static int PictureIndex = 0;
 
         public static string Market
         {
