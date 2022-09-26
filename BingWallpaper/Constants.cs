@@ -41,7 +41,7 @@ namespace Kfstorm.BingWallpaper
 
         public static string WallpaperInfoUrl
         {
-            get { return string.Format("http://www.bing.com/hpimagearchive.aspx?format=xml&idx={0}&n={1}&mkt={2}", PictureIndex, PictureCount, Market); }
+            get { return string.Format("https://www.bing.com/hpimagearchive.aspx?format=xml&idx={0}&n={1}&mkt={2}", PictureIndex, PictureCount, Market); }
         }
 
         public static int PictureCount
@@ -61,7 +61,7 @@ namespace Kfstorm.BingWallpaper
 
         public static string PictureUrlFormat
         {
-            get { return "http://www.bing.com{0}_UHD.jpg"; }
+            get { return "https://www.bing.com{0}_UHD.jpg"; }
         }
 
         public static TimeZoneInfo TimeZone
