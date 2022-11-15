@@ -89,5 +89,17 @@ namespace Kfstorm.BingWallpaper
             if (titleLable.Tag != null) UrlHelper.OpenLink((string)titleLable.Tag);
         }
 
+        private void preButton_Click(object sender, EventArgs e)
+        {
+            if(Constants.PictureIndex > 0)
+            {
+                Program.ReflashPicture(--Constants.PictureIndex);
+            }
+        }
+
+        private void nextButton_Click(object sender, EventArgs e)
+        {
+            Program.ReflashPicture(++Constants.PictureIndex);
+        }
     }
 }

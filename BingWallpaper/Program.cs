@@ -41,7 +41,7 @@ namespace Kfstorm.BingWallpaper
                 CreateMainForm();
                 _downloader.DownloadCompleted += _downloader_DownloadCompleted;
                 _downloader.WallpaperChanged += _downloader_WallpaperChanged;
-                _downloader.Run();
+                _downloader.Run(10);
                 if (!runInBackground)
                 {
                     ShowMainForm();
@@ -97,6 +97,12 @@ namespace Kfstorm.BingWallpaper
             {
                 return false;
             }
+        }
+
+        public static void ReflashPicture(int i)
+        {
+            Constants.PictureIndex = i;
+            _downloader.Run(0);
         }
 
         public static void SetRunOnStartup(bool startup)

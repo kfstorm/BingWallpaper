@@ -28,13 +28,25 @@ namespace Kfstorm.BingWallpaper
             State = LoadState();
         }
 
-        public void Run()
+        public async void Run(int refrashTime)
         {
-            if (_task != null)
+            if (refrashTime > 0)
             {
-                throw new InvalidOperationException("Already started running");
+                if (_task != null && !_task.IsCompleted)
+                {
+                    throw new InvalidOperationException("Already started running");
+                }
+                while (!_cts.Token.IsCancellationRequested)
+                {
+                    _task = DoWork(_cts.Token);
+                    _firstTime = false;
+                    await Task.Delay(TimeSpan.FromMinutes(refrashTime), _cts.Token);
+                }
             }
-            _task = DoWork(_cts.Token);
+            else
+            {
+                _task = DoWork(_cts.Token);
+            }
         }
 
         State LoadState()
@@ -92,72 +104,67 @@ namespace Kfstorm.BingWallpaper
             }
         }
 
+
         private async Task DoWork(CancellationToken ct)
         {
-            while (!ct.IsCancellationRequested)
+            try
             {
-                try
+                var xmlContent = await _webAccessor.DownloadStringAsync(Constants.WallpaperInfoUrl);
+                ct.ThrowIfCancellationRequested();
+                var info = new BingWallpaperInfo(xmlContent);
+                if (info.PictureUrl != State.PictureUrl || !File.Exists(State.PictureFilePath))
                 {
-                    var xmlContent = await _webAccessor.DownloadStringAsync(Constants.WallpaperInfoUrl);
-                    ct.ThrowIfCancellationRequested();
-                    var info = new BingWallpaperInfo(xmlContent);
-                    if (info.PictureUrl != State.PictureUrl || !File.Exists(State.PictureFilePath))
+                    try
                     {
+                        await _webAccessor.DownloadFileAsync(info.PictureUrl, Constants.JpgFile);
+                        ct.ThrowIfCancellationRequested();
+
+                        if (_isJpgSupported)
+                        {
+                            ChangeWallpager(Constants.JpgFile);
+                        }
+                        else
+                        {
+                            ConvertJpgToBmp(Constants.JpgFile, Constants.BmpFile);
+                            File.Delete(Constants.JpgFile);
+                            ChangeWallpager(Constants.BmpFile);
+                        }
+                        State.PictureUrl = info.PictureUrl;
+                        State.PictureFilePath = _isJpgSupported ? Constants.JpgFile : Constants.BmpFile;
+                        State.Copyright = info.Copyright;
+                        SaveState(State);
+                        OnDownloadCompleted();
+                    }
+                    catch (Exception ex)
+                    {
+                        Log(ex.ToString());
                         try
                         {
-                            await _webAccessor.DownloadFileAsync(info.PictureUrl, Constants.JpgFile);
-                            ct.ThrowIfCancellationRequested();
-
-                            if (_isJpgSupported)
+                            foreach (var file in new[] { Constants.JpgFile, Constants.BmpFile })
                             {
-                                ChangeWallpager(Constants.JpgFile);
-                            }
-                            else
-                            {
-                                ConvertJpgToBmp(Constants.JpgFile, Constants.BmpFile);
-                                File.Delete(Constants.JpgFile);
-                                ChangeWallpager(Constants.BmpFile);
-                            }
-                            State.PictureUrl = info.PictureUrl;
-                            State.PictureFilePath = _isJpgSupported ? Constants.JpgFile : Constants.BmpFile;
-                            State.Copyright = info.Copyright;
-                            SaveState(State);
-                            OnDownloadCompleted();
-                        }
-                        catch (Exception ex)
-                        {
-                            Log(ex.ToString());
-                            try
-                            {
-                                foreach (var file in new[] {Constants.JpgFile, Constants.BmpFile})
+                                if (File.Exists(file))
                                 {
-                                    if (File.Exists(file))
-                                    {
-                                        File.Delete(file);
-                                    }
+                                    File.Delete(file);
                                 }
                             }
-                            catch (Exception ex2)
-                            {
-                                Log(ex2.ToString());
-                            }
                         }
-                    }
-                    else
-                    {
-                        if (_firstTime)
+                        catch (Exception ex2)
                         {
-                            ChangeWallpager(State.PictureFilePath);
+                            Log(ex2.ToString());
                         }
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Log(ex.ToString());
+                    if (_firstTime)
+                    {
+                        ChangeWallpager(State.PictureFilePath);
+                    }
                 }
-                _firstTime = false;
-
-                await Task.Delay(TimeSpan.FromMinutes(10), ct);
+            }
+            catch (Exception ex)
+            {
+                Log(ex.ToString());
             }
         }
 
